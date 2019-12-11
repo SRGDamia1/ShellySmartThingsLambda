@@ -20,6 +20,7 @@ module.exports = {
     install: function (installData) {
         updateDevices(installData, []);
         st.createSchedule(installData.authToken, installData.installedApp.installedAppId, 'poll', '1/5 * * * ? *');
+        // st.createSchedule(installData.authToken, installData.installedApp.installedAppId, 'poll', '1/10 * * * ? *');
     },
 
     /**
@@ -59,7 +60,7 @@ function updateDevices(params, existingDevices) {
     if (config) {
         // Query Shelly for list of devices
         // let shellyAccessToken = util.shellyAccessToken(state, config);
-        shelly.listAllShellyDevices(shellyAccessToken, function (shellyDevices) {
+        shelly.listAllShellyDevices.withOptions({ expiration: 1000, id: "crud.updateDevices.listAllShellyDevices" }, shellyAccessToken, function (shellyDevices) {
             util.reconcileDeviceLists(params.authToken, locationId, installedAppId, shellyDevices, existingDevices);
         });
     }

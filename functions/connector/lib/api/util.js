@@ -46,7 +46,8 @@ module.exports = {
                 }
 
                 // Need to get the current status to get the events
-                shelly.getSingleShellyDeviceStatus(shellyAccessToken, combinedId, function (shellyDeviceStatus) {
+                shelly.getSingleShellyDeviceStatus.withOptions({ expiration: 1000, id: "util.reconcileDeviceLists.getSingleShellyDeviceStatus" },
+                    shellyAccessToken, combinedId, function (shellyDeviceStatus) {
                     st.createDevice(token, map).then(function (data) {
                         log.debug("created device " + data.deviceId);
                         log.info(JSON.stringify(shelly.initialDeviceEvents(shellyDeviceStatus, relayChannel)));

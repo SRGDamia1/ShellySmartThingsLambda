@@ -17,7 +17,7 @@ const shellyApiEndpoint = config.get('shelly.apiEndpoint');
 // Restrict all calls the Shelly API to one request per second
 // I've found even set at 1000ms, I hit the limit a lot, so I set it bigger
 var shellyAPIlimiter = new Bottleneck({
-    minTime: 1500,
+    minTime: 2500,
     maxConcurrent: 1
 });
 
@@ -37,17 +37,18 @@ shellyAPIlimiter.on("failed", async (error, jobInfo) => {
 
     if (jobInfo.retryCount === 0) { // Here we only retry once
         log.info(`Retrying job ${id} in 1s!`);
-        return 1000;
+        return 1500;
     }
 });
 shellyAPIlimiter.on("debug", function (message, data) {
     // Useful to figure out what the limiter is doing in real time
     // and to help debug your application
-    log.trace(`${message}\n${data}`);
+    log.trace(`BOTTLENECK: ${message}\n${data}`);
 });
 
 // Listen to the "retry" event, just to print a trace when we're retrying
 shellyAPIlimiter.on("retry", (error, jobInfo) => log.trace(`Now retrying ${jobInfo.options.id}`));
+shellyAPIlimiter.on("failed", (error, jobInfo) => log.trace(`Now retrying ${jobInfo.options.id}`));
 
 
 /**
@@ -153,7 +154,7 @@ module.exports = {
 function verifyIsOk(apiResponse) {
     log.trace(`Checking Shelly Response is OK: ${JSON.stringify(apiResponse, null, 2)}`);
     if (!apiResponse.isok) {
-        log.trace("Response is NOT OK - probably a request limit rejection!");
+        log.error("Response is NOT OK!");
         throw new Error("Shelly API call rejected!");
     } else {
         log.trace("Response OK!");
@@ -175,9 +176,13 @@ function _listAllShellyDevices(token, callback) {
         },
         transform: function (body) {
             let fullBody = JSON.parse(body);
-            verifyIsOk(fullBody);
-            // log.info(`Shelly Response: ${JSON.stringify(fullBody, null, 2)}`);
-            return fullBody.data.devices;
+            // verifyIsOk(fullBody);
+            log.info(`Shelly Response: ${JSON.stringify(fullBody, null, 2)}`);
+            if (fullBody.hasOwnProperty('data')) {
+                return fullBody.data.devices;
+            } else {
+                return fullBody;
+            }
         }
     };
     log.trace(`Shelly Request URI: ${options.uri}\n${JSON.stringify(options.form, null, 2)}`);
@@ -186,7 +191,7 @@ function _listAllShellyDevices(token, callback) {
             callback(data);
         })
         .catch(rpErrors.TransformError, function (err) {
-            log.error(`On getting list of devices:\n${err}`)
+            log.error(`TransformError On getting list of devices:\n${err}`)
         })
         .catch(function (err) {
             log.error(`On getting list of devices:\n${err}`)
@@ -207,9 +212,13 @@ function _getAllShellyDeviceStatuses(token, callback) {
         },
         transform: function (body) {
             let fullBody = JSON.parse(body);
-            verifyIsOk(fullBody);
-            // log.info(`Shelly Response: ${JSON.stringify(fullBody, null, 2)}`);
-            return fullBody.data.devices_status;
+            // verifyIsOk(fullBody);
+            log.info(`Shelly Response: ${JSON.stringify(fullBody, null, 2)}`);
+            if (fullBody.hasOwnProperty('data')) {
+                return fullBody.data.devices_status;
+            } else {
+                return fullBody;
+            }
         }
     };
     log.trace(`Shelly Request URI: ${options.uri}\n${JSON.stringify(options.form, null, 2)}`);
@@ -218,7 +227,7 @@ function _getAllShellyDeviceStatuses(token, callback) {
             callback(data);
         })
         .catch(rpErrors.TransformError, function (err) {
-            log.error(`On getting all statuses:\n${err}`)
+            log.error(`TransformError On getting all statuses:\n${err}`)
         })
         .catch(function (err) {
             log.error(`On getting all statuses:\n${err}`)
@@ -240,9 +249,13 @@ function _getSingleShellyDeviceStatus(token, externalId, callback) {
         },
         transform: function (body) {
             let fullBody = JSON.parse(body);
-            verifyIsOk(fullBody);
-            // log.info(`Shelly Response: ${JSON.stringify(fullBody, null, 2)}`);
-            return fullBody.data.device_status;
+            // verifyIsOk(fullBody);
+            log.info(`Shelly Response: ${JSON.stringify(fullBody, null, 2)}`);
+            if (fullBody.hasOwnProperty('data')) {
+                return fullBody.data.device_status;
+            } else {
+                return fullBody;
+            }
         }
     };
     log.trace(`Shelly Request URI: ${options.uri}\n${JSON.stringify(options.form, null, 2)}`);
@@ -251,7 +264,7 @@ function _getSingleShellyDeviceStatus(token, externalId, callback) {
             callback(data);
         })
         .catch(rpErrors.TransformError, function (err) {
-            log.error(`On getting status of ${externalId}:\n${err}`)
+            log.error(`TransformError On getting status of ${externalId}:\n${err}`)
         })
         .catch(function (err) {
             log.error(`On getting status of ${externalId}:\n${err}`)
@@ -281,8 +294,8 @@ function _sendRelayCommand(token, externalId, relayAction, callback) {
         },
         transform: function (body) {
             let fullBody = JSON.parse(body);
-            verifyIsOk(fullBody);
-            // log.info(`Shelly Response: ${JSON.stringify(fullBody, null, 2)}`);
+            // verifyIsOk(fullBody);
+            log.info(`Shelly Response: ${JSON.stringify(fullBody, null, 2)}`);
             return fullBody;
         }
     };
@@ -294,7 +307,7 @@ function _sendRelayCommand(token, externalId, relayAction, callback) {
             }
         })
         .catch(rpErrors.TransformError, function (err) {
-            log.error(`On sending commands to ${externalId}:\n${err}`)
+            log.error(`TransformError On sending commands to ${externalId}:\n${err}`)
         })
         .catch(function (err) {
             log.error(`On sending commands to ${externalId}:\n${err}`)

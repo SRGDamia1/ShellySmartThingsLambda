@@ -23,7 +23,8 @@ module.exports = {
         deviceCommandsEvent.commands.forEach(function (cmd) {
             switch (cmd.command) {
                 case "on": {
-                    shelly.sendRelayCommand(shellyAccessToken, deviceCommandsEvent.externalId, "on", function (data, resp) {
+                    shelly.sendRelayCommand.withOptions({ expiration: 1000, id: "event.handleDeviceCommand-case=on.sendRelayCommand" },
+                        shellyAccessToken, deviceCommandsEvent.externalId, "on", function (data, resp) {
                         let body = [
                             {
                                 component: "main",
@@ -37,7 +38,8 @@ module.exports = {
                     break;
                 }
                 case "off": {
-                    shelly.sendRelayCommand(shellyAccessToken, deviceCommandsEvent.externalId, "off", function (data, resp) {
+                    shelly.sendRelayCommand.withOptions({ expiration: 1000, id: "event.handleDeviceCommand-case=off.sendRelayCommand" },
+                        shellyAccessToken, deviceCommandsEvent.externalId, "off", function (data, resp) {
                         let body = [
                             {
                                 component: "main",
@@ -200,7 +202,8 @@ module.exports = {
         let token = eventData.authToken;
         st.listDevices(token, eventData.installedApp.locationId, eventData.installedApp.installedAppId).then(function (smartThingsDevices) {
             // let shellyAccessToken = util.shellyAccessToken(state, eventData.installedApp.config);
-            shelly.getAllShellyDeviceStatuses(shellyAccessToken, function (shellyDeviceStatuses) {
+            shelly.getAllShellyDeviceStatuses.withOptions({ expiration: 1000, id: "event.handleScheduledEvent.getAllShellyDeviceStatuses" },
+                shellyAccessToken, function (shellyDeviceStatuses) {
                 for (var id in shellyDeviceStatuses) {
                     log.trace(`Current Device Status: ${JSON.stringify(shellyDeviceStatuses[id], null, 2)}`);
                     shellyDeviceStatuses[id].relays.forEach(function (thisRelay, thisRelayChannel) {
@@ -216,7 +219,8 @@ module.exports = {
                     });
                 }
             });
-            shelly.listAllShellyDevices(shellyAccessToken, function (shellyDevices) {
+            shelly.listAllShellyDevices.withOptions({ expiration: 1000, id: "event.handleScheduledEvent.listAllShellyDevices" },
+                shellyAccessToken, function (shellyDevices) {
                 util.reconcileDeviceLists(token, eventData.installedApp.locationId, eventData.installedApp.installedAppId, shellyDevices, smartThingsDevices);
             });
         });
